@@ -1,0 +1,12 @@
+__pycache__/
+venv/
+cropped_faces/
+faces/
+faces.rar
+
+keras_se_mobile_facenet_emore_triplet_basic_agedb_30_epoch_100_0.958333.h5
+mobilefacenet-tensorflow2-default-v1.tar.gz
+mobilefacenet.tflite
+rafael_student.h5
+rafael_student.tflite
+triplet_dist_student.tflite
