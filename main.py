@@ -1,29 +1,17 @@
-import time
 import os
+from typing import List
 
-from typing import List, Tuple
-
-import tflite_runtime.interpreter as tflite
-# from PIL import Image
 import numpy as np
 import cv2
 
+from model import load_model_interpreter, get_embeddings
+from image import get_image, get_images, create_cropped_faces, try_crop_face
 from margin import Margin
+from utils import cosine_distance
 
-face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades
-                                        + "haarcascade_frontalface_default.xml"
-                                        )
-
-# model_path = "/home/luan/dev/tcc-eval/mobilefacenet.tflite"
+model_path = "/home/luan/dev/tcc-eval/mobilefacenet.tflite"
 # model_path = "/home/luan/dev/tcc-eval/rafael_student.tflite"
 model_path = "/home/luan/dev/tcc-eval/triplet_dist_student.tflite"
-
-
-def load_model_interpreter(model_path: str) -> tflite.Interpreter:
-    interpreter = tflite.Interpreter(model_path=model_path)
-    interpreter.allocate_tensors()
-
-    return interpreter
 
 
 interpreter = load_model_interpreter(model_path)
@@ -31,139 +19,122 @@ interpreter = load_model_interpreter(model_path)
 print(interpreter.get_input_details())
 print(interpreter.get_output_details())
 
-
-def test_image(interpreter: tflite.Interpreter, image: np.array) -> Tuple[np.array, np.array, float]:
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-
-    # NxHxWxC, H:1, W:2
-    # height = input_details[0]['shape'][1]
-    # width = input_details[0]['shape'][2]
-
-    # check the type of the input tensor
-    floating_model = input_details[0]['dtype'] == np.float32
-
-    # add N dim
-    input_data = np.expand_dims(image, axis=0)
-    input_mean = 0
-    input_std = 1
-
-    if floating_model:
-        input_data = (np.float32(input_data) - input_mean) / input_std
-
-    interpreter.set_tensor(input_details[0]['index'], input_data)
-
-    start_time = time.time()
-    interpreter.invoke()
-    stop_time = time.time()
-
-    dt = (stop_time - start_time) * 1000
-    print('time: {:.3f}ms'.format(dt))
-
-    output_data = interpreter.get_tensor(output_details[0]['index'])
-
-    results = np.squeeze(output_data)
-    top_k = results.argsort()[-5:][::-1]
-
-    return results, top_k, dt
-
-
-def get_images() -> List[str]:
-    return os.listdir("faces")
-
-
-def cosine_distance(v1: np.ndarray, v2: np.ndarray) -> List[float]:
-    v1_v2 = np.dot(v1, v2)
-    v1_len = np.linalg.norm(v1)
-    v2_len = np.linalg.norm(v2)
-
-    cos_sim = v1_v2 / (v1_len * v2_len)
-    return 1 - cos_sim, cos_sim
-
-
 base_path = "faces"
 faces = get_images()
 
-total_dt1 = 0
-total_dt2 = 0
-total_dist = 0
-total_sim = 0
-
-cropped_faces_folder = os.path.join(
-        os.path.curdir,
-        "cropped_faces")
-os.makedirs(cropped_faces_folder, exist_ok=True)
+cropped_faces_folder = create_cropped_faces()
 
 
-margins = [
-    Margin(0.10),
-    Margin(0.15),
-    Margin(0.20),
-    Margin(0.30),
-    Margin(0.40),
-    Margin(0.50),
-]
+def print_model_output(embeddings: np.array, top_k: np.array, dt: float):
+    print(f"Top K: {top_k}")
+    print(f"Embeddings shape: {embeddings.shape}")
+    print(f"Embeddings [:5]: {embeddings[:5]}")
+    print(f"Embeddings [-5:]: {embeddings[-5:]}")
 
-for face in faces:
-    print(f"Face: {face}")
 
-    img1 = cv2.imread(os.path.join(base_path, face))
-    img1 = cv2.flip(img1, 1)
+def print_dist_sim(dist: float, sim: float):
+    print(f"Dist: {dist}")
+    print(f"Sim: {sim}")
 
-    detected_face = face_classifier.detectMultiScale(img1,
-                                                     scaleFactor=1.1,
-                                                     minNeighbors=5,
-                                                     minSize=(40, 40))
 
-    if len(detected_face) >= 1:
-        (x, y, w, h) = detected_face[-1]
-        img1 = img1[y:y+h, x:x+w]
-
-    # cv2.imshow(f"debug ({i})", img1)
-    # cv2.waitKey(0)
-
-    img1 = cv2.resize(img1, (112, 112))
-    cv2.imwrite(os.path.join(cropped_faces_folder, face), img1)
-
-    # img1 = Image.open(os.path.join(base_path, face))
-    # img1 = img1.resize((112, 112))
-    embeddings1, top_k, dt1 = test_image(interpreter, img1)
-    print(top_k)
-    print(embeddings1.shape)
-    print(embeddings1[:5])
-    print(embeddings1[-5:])
-    total_dt1 += dt1
-
-    img2 = cv2.flip(img1, cv2.ROTATE_180)
-    # img2 = np.flip(img1, axis=2)
-    embeddings2, top_k, dt2 = test_image(interpreter, img2)
-    total_dt2 += dt2
-
-    dist, sim = cosine_distance(embeddings1, embeddings2)
-    print(top_k)
-    print(embeddings2.shape)
-    print(embeddings2[:5])
-    print(embeddings2[-5:])
-
-    total_dist += dist
-    total_sim += sim
-    print(f"Cos dist: {dist}")
-    print(f"Cos sim: {sim}")
-
+def print_margins_dist(margins: List[Margin], dist: float):
     for m in margins:
         print(f"\tMargin {m.threshold}: {m.evaluate(dist)}")
 
-print("="*30)
 
-len_faces = len(faces)
-print(f"Avg. dt1: {total_dt1/len_faces}(ms)")
-print(f"Avg. dt2: {total_dt2/len_faces}(ms)")
-print(f"Avg. dist: {total_dist/len_faces}")
-print(f"Avg. sim: {total_sim/len_faces}")
+def print_margin_avg(margins: List[Margin]):
+    for m in margins:
+        print(f"Margin {m.threshold}")
+        print(f"\tAccuracy: {m.get_accuracy()}")
+        print(f"\tPrecision: {m.get_precision()}")
+        print(f"\tRecall: {m.get_recall()}")
+        print(f"\tF1 Score: {m.get_f1_score()}")
 
-for m in margins:
-    print(f"Margin {m.threshold}")
-    print(f"\tAccuracy: {m.get_accuracy()}")
-    print(f"\tPrecision: {m.get_precision()}")
-    print(f"\tRecall: {m.get_recall()}")
-    print(f"\tF1 Score: {m.get_f1_score()}")
+
+def test_flipped_faces():
+    total_dt1 = 0
+    total_dt2 = 0
+    total_dist = 0
+    total_sim = 0
+
+    margins = [
+        Margin(0.025), Margin(0.050), Margin(0.100), Margin(0.150),
+        Margin(0.200), Margin(0.300), Margin(0.400), Margin(0.500),
+    ]
+
+    for face in faces:
+        face_str = f"{'='*20} {face} {'='*20}"
+        print(face_str)
+        img1 = get_image(base_path, face)
+
+        img1 = try_crop_face(img1)
+        cv2.imwrite(os.path.join(cropped_faces_folder, face), img1)
+
+        embeddings1, top_k, dt1 = get_embeddings(interpreter, img1)
+        print_model_output(embeddings1, top_k, dt1)
+        total_dt1 += dt1
+
+        img2 = cv2.flip(img1, cv2.ROTATE_180)
+        print(f"{'='*15} {face} (flipped) {'='*15}")
+
+        embeddings2, top_k, dt2 = get_embeddings(interpreter, img2)
+        print_model_output(embeddings1, top_k, dt1)
+        total_dt2 += dt2
+
+        dist, sim = cosine_distance(embeddings1, embeddings2)
+
+        total_dist += dist
+        total_sim += sim
+
+        dist_msg = f" {face} dist/sim "
+        equal_len = (len(face_str) - len(dist_msg)) // 2
+        print(f"{'='*equal_len}{dist_msg}{'='*equal_len}")
+        print_dist_sim(dist, sim)
+
+        print_margins_dist(margins, dist)
+
+    print("="*30)
+
+    len_faces = len(faces)
+    print(f"Avg. dt1: {total_dt1/len_faces}(ms)")
+    print(f"Avg. dt2: {total_dt2/len_faces}(ms)")
+    print(f"Avg. dist: {total_dist/len_faces}")
+    print(f"Avg. sim: {total_sim/len_faces}")
+
+    print_margin_avg(margins)
+
+# # exit(0)
+# face_1 = faces[0]
+# print(f"Img1: {face_1}")
+# f1 = get_image(base_path, face_1)
+# f1 = try_crop_face(f1)
+#
+# # f1 = Image.open(os.path.join(base_path, face))
+# # f1 = f1.resize((112, 112))
+# embeddings1, top_k, dt1 = get_embeddings(interpreter, f1)
+# print(embeddings1)
+#
+# for face_2 in faces[1:]:
+#     print(f"Img2: {face_2}")
+#     f2 = get_image(base_path, face_2)
+#     f2 = try_crop_face(f2)
+#
+#     embeddings2, top_k, dt2 = get_embeddings(interpreter, f2)
+#
+#     dist, sim = cosine_distance(embeddings1, embeddings2)
+#     print("="*30)
+#     print_dist_sim(dist, sim)
+#     for m in margins:
+#         print(f"Margin {m.threshold}: {m.evaluate(dist, False)}")
+#
+# print("="*30)
+# for m in margins:
+#     print(f"Margin {m.threshold}")
+#     print(f"\tAccuracy: {m.get_accuracy()}")
+#     print(f"\tPrecision: {m.get_precision()}")
+#     print(f"\tRecall: {m.get_recall()}")
+#     print(f"\tF1_score: {m.get_f1_score()}")
+
+
+if __name__ == "__main__":
+    test_flipped_faces()
