@@ -2,7 +2,9 @@ __pycache__/
 venv/
 cropped_faces/
 faces/
+data/
 faces.rar
+archive.zip
 
 keras_se_mobile_facenet_emore_triplet_basic_agedb_30_epoch_100_0.958333.h5
 mobilefacenet-tensorflow2-default-v1.tar.gz
