@@ -1,5 +1,8 @@
 __pycache__/
 venv/
+models/
+logs/
+old_logs/
 cropped_faces/
 faces/
 data/
