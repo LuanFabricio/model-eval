@@ -9,8 +9,8 @@ face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades
                                         )
 
 
-def get_images() -> List[str]:
-    return os.listdir("faces")
+def get_images(path: str) -> List[str]:
+    return os.listdir(path)
 
 
 def create_cropped_faces() -> str:
@@ -24,6 +24,9 @@ def create_cropped_faces() -> str:
 
 def get_image(base_path: str, face: str, flip=False) -> cv2.UMat:
     img1 = cv2.imread(os.path.join(base_path, face))
+    img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
+    # img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+    # img1 = cv2.cvtColor(img1, cv2.COLOR_GRAY2RGB)
     if flip:
         img1 = cv2.flip(img1, cv2.ROTATE_180)
     return img1
@@ -34,7 +37,7 @@ def try_crop_face(img: cv2.UMat) -> cv2.UMat:
                                                      scaleFactor=1.1,
                                                      minNeighbors=5,
                                                      minSize=(40, 40))
-    return cv2.resize(img, (112, 112))
     if len(detected_face) >= 1:
         (x, y, w, h) = detected_face[-1]
         img = img[y:y+h, x:x+w]
+    return cv2.resize(img, (112, 112), interpolation=cv2.INTER_LINEAR)
