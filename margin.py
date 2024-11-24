@@ -14,20 +14,28 @@ class Margin:
         self.false_positive = 0
         self.false_negative = 0
 
-    def evaluate(self, distance: float, is_true: bool = True):
-        if self.threshold > distance:
+    @staticmethod
+    def from_range(base: float, scale: float, start: int = 1, end: int = 11):
+        return [Margin(base + i * scale) for i in range(start, end)]
+
+    def evaluate(self, distance: float) -> bool:
+        return distance < self.threshold
+
+    def evaluate_with_metrics(self, distance: float, is_true: bool = True):
+        result = self.evaluate(distance)
+
+        if result:
             if is_true:
                 self.true_positive += 1
             else:
                 self.false_positive += 1
-            return True
-
-        if is_true:
-            self.false_negative += 1
         else:
-            self.true_negative += 1
+            if is_true:
+                self.false_negative += 1
+            else:
+                self.true_negative += 1
 
-        return False
+        return result
 
     def get_precision(self) -> float:
         total_positive = self.true_positive + self.false_positive
