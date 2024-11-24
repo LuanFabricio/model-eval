@@ -3,7 +3,7 @@ import time
 from typing import Tuple
 
 import numpy as np
-import tflite_runtime.interpreter as tflite
+from tensorflow import lite as tflite
 
 
 def load_model_interpreter(model_path: str) -> tflite.Interpreter:
@@ -18,16 +18,8 @@ def get_embeddings(interpreter: tflite.Interpreter, image: np.array) -> Tuple[
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
-    # check the type of the input tensor
-    floating_model = input_details[0]['dtype'] == np.float32
-
     # add N dim
-    input_data = np.expand_dims(image, axis=0)
-    input_mean = 0
-    input_std = 1
-
-    if floating_model:
-        input_data = (np.float32(input_data) - input_mean) / input_std
+    input_data = np.expand_dims(image, axis=0).astype(np.float32)
 
     interpreter.set_tensor(input_details[0]['index'], input_data)
 
@@ -36,9 +28,10 @@ def get_embeddings(interpreter: tflite.Interpreter, image: np.array) -> Tuple[
     stop_time = time.time()
 
     dt = (stop_time - start_time) * 1000
-    print('time: {:.3f}ms'.format(dt))
+    # print('time: {:.3f}ms'.format(dt))
 
     output_data = interpreter.get_tensor(output_details[0]['index'])
+    print(output_data)
 
     results = np.squeeze(output_data)
     top_k = results.argsort()[-5:][::-1]
