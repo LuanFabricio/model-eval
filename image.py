@@ -23,6 +23,7 @@ def create_cropped_faces() -> str:
 
 
 def get_image(base_path: str, face: str, flip=False) -> cv2.UMat:
+    print(f"Path: {base_path}/{face}")
     img1 = cv2.imread(os.path.join(base_path, face))
     img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
     # img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
@@ -33,6 +34,8 @@ def get_image(base_path: str, face: str, flip=False) -> cv2.UMat:
 
 
 def try_crop_face(img: cv2.UMat) -> cv2.UMat:
+    return cv2.resize(img, (112, 112), interpolation=cv2.INTER_LINEAR)
+
     detected_face = face_classifier.detectMultiScale(img,
                                                      scaleFactor=1.1,
                                                      minNeighbors=5,
@@ -40,4 +43,3 @@ def try_crop_face(img: cv2.UMat) -> cv2.UMat:
     if len(detected_face) >= 1:
         (x, y, w, h) = detected_face[-1]
         img = img[y:y+h, x:x+w]
-    return cv2.resize(img, (112, 112), interpolation=cv2.INTER_LINEAR)
