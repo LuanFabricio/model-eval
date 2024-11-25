@@ -12,7 +12,7 @@ class ConfusionMatrix:
     def get_accuracy(self) -> float:
         true_values = 0
         for i in range(self.size):
-            true_values = self.matrix[i][i]
+            true_values += self.matrix[i][i]
 
         total = 0
         for row in self.matrix:
@@ -32,4 +32,4 @@ class ConfusionMatrix:
             file.write("Target x Predicted\n")
             for row in self.matrix:
                 file.write(f"{str(row)}\n")
-            file.write(f"\nAccuracy: {self.get_accuracy}")
+            file.write(f"\nAccuracy: {self.get_accuracy()}")
