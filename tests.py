@@ -83,38 +83,76 @@ class TestModel:
         title: str,
     ):
         total_dt = 0
-        cm = ConfusionMatrix(len(self.faces))
-
+        qnt_inference = 0
         len_faces = len(self.faces)
+
+        cm = ConfusionMatrix(len_faces)
+        embeddings_cache = [None for _ in range(len_faces)]
+        flipped_embeddings_cache = [None for _ in range(len_faces)]
+
+        cropped_faces_folder = create_cropped_faces()
 
         for i in range(len(self.faces)):
             lowest_dist = sys.float_info.max
             face_index = -1
 
             face_anchor = self.faces[i]
-            img_anchor = get_image(self.faces_base_path, face_anchor)
-            img_anchor = try_crop_face(img_anchor)
 
-            anchor_embeddings, _, current_dt = self.model.get_embeddings(
-                    img_anchor)
-            total_dt += current_dt
+            if flipped_embeddings_cache[i] is not None:
+                anchor_embeddings = flipped_embeddings_cache[i]
+            else:
+                img_anchor = get_image(
+                        self.faces_base_path, face_anchor, flip=True)
+                img_anchor = try_crop_face(img_anchor)
+                cv2.imwrite(
+                        os.path.join(
+                            cropped_faces_folder,
+                            f"flipped_{face_anchor}"),
+                        cv2.cvtColor(img_anchor, cv2.COLOR_RGB2BGR))
+
+                anchor_embeddings, _, current_dt = self.model.get_embeddings(
+                        img_anchor)
+                total_dt += current_dt
+                qnt_inference += 1
+                flipped_embeddings_cache[i] = anchor_embeddings
+
             for j in range(len(self.faces)):
                 face_ = self.faces[j]
 
-                img = get_image(self.faces_base_path, face_, flip=True)
-                img = try_crop_face(img)
+                if embeddings_cache[j] is not None:
+                    face_embeddings = embeddings_cache[j]
+                else:
+                    img = get_image(self.faces_base_path, face_)
+                    img = try_crop_face(img)
 
-                face_embeddings, _, current_dt = self.model.get_embeddings(
-                        img)
-                total_dt += current_dt
+                    cv2.imwrite(
+                        os.path.join(
+                            cropped_faces_folder,
+                            f"{face_}"),
+                        cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
-                dist, _ = cosine_distance(anchor_embeddings, face_embeddings)
+                    face_embeddings, _, current_dt = self.model.get_embeddings(
+                            img)
+                    total_dt += current_dt
+                    qnt_inference += 1
 
+                    embeddings_cache[j] = face_embeddings
+
+                dist, sim = cosine_distance(anchor_embeddings, face_embeddings)
+
+                print(f"{'='*15} {face_anchor} vs {face_} {'='*15}")
+                print_dist_sim(dist, sim)
+                print(f"Lowest dist: {lowest_dist}")
+                print(f"Face index: {face_index}")
                 if dist < lowest_dist:
                     lowest_dist = dist
                     face_index = j
 
             cm.add(i, face_index)
+            print(f"{'='*15} Target vs Predicted {'='*15}")
+            print(f"Target: {face_anchor}")
+            print(f"Predicted: {self.faces[face_index]}")
+            print(f"Dist: {lowest_dist}")
 
         cm.log("confusion_matrix.log", self.model.name)
 
