@@ -30,6 +30,19 @@ class ConfusionMatrix:
         with open(os.path.join(base_folder, file_path), "w") as file:
             file.write(f"{equals}Confusion matrix ({model_name}){equals}\n")
             file.write("Target x Predicted\n")
-            for row in self.matrix:
-                file.write(f"{str(row)}\n")
+
+            str_matrix = ""
+            str_precision = "\n"
+            total_precision = 0
+            for i, row in enumerate(self.matrix):
+                str_matrix += f"{str(row)}\n"
+                total = sum(row)
+                precision = 0 if total == 0 else row[i] / total
+                str_precision += f"[{i}]: {precision}\n"
+                total_precision += precision
+
+            file.write(str_matrix)
+            file.write(str_precision)
+
+            file.write(f"Precision (avg): {total_precision / self.size}\n")
             file.write(f"\nAccuracy: {self.get_accuracy()}")
