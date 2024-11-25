@@ -13,11 +13,10 @@ class Model:
     def __init__(self, model_path: str, model_name: str):
         self.name = model_name
         self.interpreter = tflite.Interpreter(model_path=model_path)
-        self.interpreter.allocate_tensors
+        self.interpreter.allocate_tensors()
 
     def get_embeddings(self, image: np.array) -> Tuple[
             np.array, np.array, float]:
-        self.interpreter.allocate_tensors()
         input_details = self.interpreter.get_input_details()
         output_details = self.interpreter.get_output_details()
 
