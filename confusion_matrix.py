@@ -1,13 +1,27 @@
 import os
 
+from typing import List
+
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+
 
 class ConfusionMatrix:
+    matrix: List[List[int]]
+    size: int
+    labels: List[int]
+    predicted: List[int]
+
     def __init__(self, size: int):
         self.matrix = [[0] * size for _ in range(size)]
         self.size = size
+        self.labels = []
+        self.predicted = []
 
     def add(self, target: int, predicted: int):
         self.matrix[target][predicted] += 1
+        self.labels.append(target)
+        self.predicted.append(predicted)
 
     def get_accuracy(self) -> float:
         true_values = 0
@@ -26,6 +40,17 @@ class ConfusionMatrix:
 
     def log(self, file_path: str, model_name: str):
         base_folder = f"logs/{model_name}"
+
+        cm = confusion_matrix(self.labels, self.predicted)
+        figure = plt.figure()
+        plt.matshow(cm)
+        plt.title(f"Confusion Matrix - ({self.size}x{self.size})")
+        plt.colorbar()
+        plt.ylabel("True label")
+        plt.xlabel("Predicted label")
+        plt.savefig(
+                os.path.join(base_folder, file_path.replace(".log", ".png")))
+
         equals = "=" * 25
         with open(os.path.join(base_folder, file_path), "w") as file:
             file.write(f"{equals}Confusion matrix ({model_name}){equals}\n")
