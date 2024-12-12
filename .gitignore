@@ -4,6 +4,7 @@ models/
 logs/
 old_logs/
 cropped_faces/
+cropped/
 faces/
 data/
 faces.rar
