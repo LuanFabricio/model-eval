@@ -111,7 +111,7 @@ class TestModel:
                         cv2.cvtColor(img_anchor, cv2.COLOR_RGB2BGR))
 
                 anchor_embeddings, _, current_dt = self.model.get_embeddings(
-                        img_anchor)
+                        (img_anchor - 127.5) / 128)
                 total_dt += current_dt
                 qnt_inference += 1
                 flipped_embeddings_cache[i] = anchor_embeddings
@@ -132,7 +132,7 @@ class TestModel:
                         cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
                     face_embeddings, _, current_dt = self.model.get_embeddings(
-                            img)
+                            (img - 127.5) / 128)
                     total_dt += current_dt
                     qnt_inference += 1
 
