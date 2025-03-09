@@ -1,7 +1,7 @@
 import sys
 import os
 
-from typing import List
+from typing import List, Tuple
 
 import cv2
 import numpy as np
@@ -79,9 +79,10 @@ class TestModel:
 
     def test_flipped_faces2(
         self,
+        run: int,
         file: str,
         title: str,
-    ):
+    ) -> Tuple[float, int, float]:
         total_dt = 0
         qnt_inference = 0
         len_faces = len(self.faces)
@@ -154,10 +155,13 @@ class TestModel:
             print(f"Predicted: {self.faces[face_index]}")
             print(f"Dist: {lowest_dist}")
 
-        cm.log("confusion_matrix.log", self.model.name)
+        cm.log(f"confusion_matrix_{run:02}.log", self.model.name)
 
         print("="*30)
-        print(f"Avg. dt: {total_dt/(len_faces*len_faces)}(ms)")
+        avg_dt = total_dt/(len_faces*len_faces)
+        print(f"Avg. dt: {avg_dt}(ms)")
+
+        return total_dt, len_faces, avg_dt
 
     def test_flipped_faces(
         self,
