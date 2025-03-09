@@ -28,15 +28,27 @@ if __name__ == "__main__":
     start = 1
     end = 6
 
-    def create_margin():
-        return Margin.from_range(base, scale, start, end)
+    runs = 10
+    samples = []
+    for i in range(1, runs+1):
+        def create_margin():
+            return Margin.from_range(base, scale, start, end)
 
-    margins = create_margin()
-    model_test = TestModel(interpreter, margins, faces_base_path="faces")
+        margins = create_margin()
+        model_test = TestModel(
+            interpreter, margins, faces_base_path="cropped/crop")
 
-    cm = ConfusionMatrix(2)
-    model_test.test_flipped_faces2("flipped.log", "Flipped 2")
-    # model_test.test_flipped_faces(margins, "flipped.log", "Flipped", cm)
-    # model_test.test_diff(margins, "flipped+diff.log", "Flipped and Diff")
-    # model_test.test_diff(create_margin(), "diff.log", "Diff")
-    # model_test.triplet_test(create_margin(), "triplet.log", "Triplet")
+        cm = ConfusionMatrix(2)
+        _, _, avg_dt = model_test.test_flipped_faces2(
+                i, f"flipped_{i:02}.log", "Flipped 2")
+        samples.append(avg_dt)
+
+        # model_test.test_flipped_faces(margins, "flipped.log", "Flipped", cm)
+        # model_test.test_diff(margins, "flipped+diff.log", "Flipped and Diff")
+        # model_test.test_diff(create_margin(), "diff.log", "Diff")
+        # model_test.triplet_test(create_margin(), "triplet.log", "Triplet")
+
+    print(f"{'='*30} Avg. inference time {'='*30}")
+    print(
+        "\n".join(map(lambda x: f"Run {x[0]:02}: {x[1]}", enumerate(samples))))
+    print(f"Total avg: {sum(samples) / runs}")
