@@ -39,10 +39,12 @@ class ConfusionMatrix:
             print(row)
 
     def log(self, file_path: str, model_name: str):
-        base_folder = f"logs/{model_name}"
+        base_folder = f"logs/models/{model_name}"
+
+        os.makedirs(base_folder, exist_ok=True)
 
         cm = confusion_matrix(self.labels, self.predicted)
-        figure = plt.figure()
+        # figure = plt.figure()
         plt.matshow(cm)
         plt.title(f"Confusion Matrix - ({self.size}x{self.size})")
         plt.colorbar()
