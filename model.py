@@ -14,6 +14,7 @@ class Model:
         self.name = model_name
         self.interpreter = tflite.Interpreter(model_path=model_path)
         self.interpreter.allocate_tensors()
+        self.input_type = self.interpreter.get_input_details()[0]["dtype"]
 
     def get_embeddings(self, image: np.array) -> Tuple[
             np.array, np.array, float]:
@@ -22,7 +23,7 @@ class Model:
 
         print(f"{'='*25} Embeddings {'='*25}")
         # add N dim
-        input_data = np.expand_dims(image, axis=0).astype(np.float32)
+        input_data = np.expand_dims(image, axis=0).astype(self.input_type)
         print(input_data[0][:5])
 
         self.interpreter.set_tensor(input_details[0]['index'], input_data)
