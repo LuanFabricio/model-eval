@@ -1,0 +1,45 @@
+LOG_BASE_FOLDER = logs/models
+MOBILEFACENET = mobilefacenet_lfw_triplet_loss_input_r8g8b8
+RAFAEL_STUDENT = rafael_student_r8g8b8
+MOBILEFACENET_QUANT = mobilefacenet_quantized_full
+RAFAEL_STUDENT_QUANT = rafael_student_r8g8b8_quantized_uint8
+TAIL_SIZE = 45
+
+
+benchmark: mobilefacenet rafael-student mobilefacenet-quant rafael-student-quant
+
+mobilefacenet: MODEL=$(MOBILEFACENET)
+mobilefacenet:
+	@echo $(MODEL)
+	@mkdir -p $(LOG_BASE_FOLDER)/$(MODEL)
+	@venv/bin/python main.py models/$(MODEL).tflite \
+		> $(LOG_BASE_FOLDER)/$(MODEL)/output.log
+	@echo $(MODEL)
+	@tail $(LOG_BASE_FOLDER)/$(MODEL)/output.log -n $(TAIL_SIZE)
+
+rafael-student: MODEL=$(RAFAEL_STUDENT)
+rafael-student:
+	@echo $(MODEL)
+	@mkdir -p $(LOG_BASE_FOLDER)/$(MODEL)
+	@venv/bin/python main.py models/$(MODEL).tflite \
+		> $(LOG_BASE_FOLDER)/$(MODEL)/output.log
+	@echo $(MODEL)
+	@tail $(LOG_BASE_FOLDER)/$(MODEL)/output.log -n $(TAIL_SIZE)
+
+mobilefacenet-quant: MODEL=$(MOBILEFACENET_QUANT)
+mobilefacenet-quant:
+	@echo $(MODEL)
+	@mkdir -p $(LOG_BASE_FOLDER)/$(MODEL)
+	@venv/bin/python main.py models/$(MODEL).tflite \
+		> $(LOG_BASE_FOLDER)/$(MODEL)/output.log
+	@echo $(MODEL)
+	@tail $(LOG_BASE_FOLDER)/$(MODEL)/output.log -n $(TAIL_SIZE)
+
+rafael-student-quant: MODEL=$(RAFAEL_STUDENT_QUANT)
+rafael-student-quant:
+	@echo $(MODEL)
+	@mkdir -p $(LOG_BASE_FOLDER)/$(MODEL)
+	@venv/bin/python main.py models/$(MODEL).tflite \
+		> $(LOG_BASE_FOLDER)/$(MODEL)/output.log
+	@echo $(MODEL)
+	@tail $(LOG_BASE_FOLDER)/$(MODEL)/output.log -n $(TAIL_SIZE)
