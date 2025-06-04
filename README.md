@@ -24,7 +24,7 @@ $ pip install -r requirements.txt
         - [tensorflow](https://pypi.org/project/tensorflow/)
         - [scikit-learn](https://pypi.org/project/scikit-learn/)
         - [matplotlib](https://pypi.org/project/matplotlib/)
-        - [opencv](pip install opencv-python)
+        - [opencv](https://pypi.org/project/opencv-python/)
 - Obs2: No Raspberry, você pode ter problemas na hora de instalar essas dependências. Em alguns casos, será melhor instalar as bibliotecas pelo gerenciador de pacotes.
 
 4. Execute o benchmark
