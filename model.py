@@ -5,6 +5,9 @@ from typing import Tuple
 import numpy as np
 from tensorflow import lite as tflite
 
+# NOTE: Use o tflite_runtime no raspberry
+# from tflite_runtime import interpreter as tflite
+
 
 class Model:
     name: str
