@@ -110,9 +110,9 @@ class TestModel:
                             cropped_faces_folder,
                             f"flipped_{face_anchor}"),
                         cv2.cvtColor(img_anchor, cv2.COLOR_RGB2BGR))
-
+                print(f"Image dtype: {img_anchor.dtype}")
                 anchor_embeddings, _, current_dt = self.model.get_embeddings(
-                        (img_anchor - 127.5) / 128)
+                        img_anchor)
                 total_dt += current_dt
                 qnt_inference += 1
                 flipped_embeddings_cache[i] = anchor_embeddings
@@ -133,7 +133,7 @@ class TestModel:
                         cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
                     face_embeddings, _, current_dt = self.model.get_embeddings(
-                            (img - 127.5) / 128)
+                            img)
                     total_dt += current_dt
                     qnt_inference += 1
 
