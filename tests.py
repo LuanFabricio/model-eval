@@ -82,7 +82,7 @@ class TestModel:
         run: int,
         file: str,
         title: str,
-    ) -> Tuple[float, int, float]:
+    ) -> Tuple[float, int, float, ConfusionMatrix]:
         total_dt = 0
         qnt_inference = 0
         len_faces = len(self.faces)
@@ -161,7 +161,7 @@ class TestModel:
         avg_dt = total_dt/(len_faces*len_faces)
         print(f"Avg. dt: {avg_dt}(ms)")
 
-        return total_dt, len_faces, avg_dt
+        return total_dt, len_faces, avg_dt, cm
 
     def test_flipped_faces(
         self,
