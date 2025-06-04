@@ -34,6 +34,18 @@ class ConfusionMatrix:
 
         return true_values / total
 
+    def get_precision(self) -> float:
+        true_values = 0
+        false_values = 0
+        for i in range(self.size):
+            if self.matrix[i][i] == 1:
+                true_values += 1
+            else:
+                false_values += 1
+
+        total = true_values + false_values
+        return true_values / total
+
     def show(self):
         for row in self.matrix:
             print(row)
