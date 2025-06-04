@@ -1,15 +1,56 @@
-test:
-	mkdir -p logs/models/mobilefacenet
-	venv/bin/python main.py models/mobilefacenet.tflite > logs/models/mobilefacenet/_mobilefacenet.log
+LOG_BASE_FOLDER = logs/models
+MOBILEFACENET = mobilefacenet_lfw_triplet_loss_input_r8g8b8
+RAFAEL_STUDENT = rafael_student_r8g8b8
+MOBILENETV3SMALL = mobilenetv3small_r8g8b8
+MOBILEFACENET_QUANT = mobilefacenet_quantized_full
+RAFAEL_STUDENT_QUANT = rafael_student_r8g8b8_quantized_uint8
+#MOBILENETV3SMALL = mobilenetv3small_r8g8b8
+TAIL_SIZE = 45
 
-	mkdir -p logs/models/rafael_student
-	venv/bin/python main.py models/rafael_student.tflite > logs/models/rafael_student/_rafael_student.log
 
-	mkdir -p logs/models/triplet_dist_student
-	venv/bin/python main.py models/triplet_dist_student.tflite > logs/models/triplet_dist_student/_triplet_dist_student.log
+benchmark: mobilefacenet rafael-student mobilenetv3small mobilefacenet-quant rafael-student-quant
 
-	mkdir -p logs/models/pair_model
-	venv/bin/python main.py models/pair_model.tflite > logs/models/pair_model/_pair_model.log
+mobilefacenet: MODEL=$(MOBILEFACENET)
+mobilefacenet:
+	@echo $(MODEL)
+	@mkdir -p $(LOG_BASE_FOLDER)/$(MODEL)
+	@venv/bin/python main.py models/$(MODEL).tflite \
+		> $(LOG_BASE_FOLDER)/$(MODEL)/output.log
+	@echo $(MODEL)
+	@tail $(LOG_BASE_FOLDER)/$(MODEL)/output.log -n $(TAIL_SIZE)
 
-	mkdir -p logs/models/pair_paper_model
-	venv/bin/python main.py models/pair_paper_model.tflite > logs/models/pair_paper_model/_pair_paper_model.log
+rafael-student: MODEL=$(RAFAEL_STUDENT)
+rafael-student:
+	@echo $(MODEL)
+	@mkdir -p $(LOG_BASE_FOLDER)/$(MODEL)
+	@venv/bin/python main.py models/$(MODEL).tflite \
+		> $(LOG_BASE_FOLDER)/$(MODEL)/output.log
+	@echo $(MODEL)
+	@tail $(LOG_BASE_FOLDER)/$(MODEL)/output.log -n $(TAIL_SIZE)
+
+mobilenetv3small: MODEL=$(MOBILENETV3SMALL)
+mobilenetv3small:
+	@echo $(MODEL)
+	@mkdir -p $(LOG_BASE_FOLDER)/$(MODEL)
+	@venv/bin/python main.py models/$(MODEL).tflite \
+		> $(LOG_BASE_FOLDER)/$(MODEL)/output.log
+	@echo $(MODEL)
+	@tail $(LOG_BASE_FOLDER)/$(MODEL)/output.log -n $(TAIL_SIZE)
+
+mobilefacenet-quant: MODEL=$(MOBILEFACENET_QUANT)
+mobilefacenet-quant:
+	@echo $(MODEL)
+	@mkdir -p $(LOG_BASE_FOLDER)/$(MODEL)
+	@venv/bin/python main.py models/$(MODEL).tflite \
+		> $(LOG_BASE_FOLDER)/$(MODEL)/output.log
+	@echo $(MODEL)
+	@tail $(LOG_BASE_FOLDER)/$(MODEL)/output.log -n $(TAIL_SIZE)
+
+rafael-student-quant: MODEL=$(RAFAEL_STUDENT_QUANT)
+rafael-student-quant:
+	@echo $(MODEL)
+	@mkdir -p $(LOG_BASE_FOLDER)/$(MODEL)
+	@venv/bin/python main.py models/$(MODEL).tflite \
+		> $(LOG_BASE_FOLDER)/$(MODEL)/output.log
+	@echo $(MODEL)
+	@tail $(LOG_BASE_FOLDER)/$(MODEL)/output.log -n $(TAIL_SIZE)
